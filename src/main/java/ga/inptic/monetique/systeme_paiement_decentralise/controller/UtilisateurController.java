@@ -25,6 +25,7 @@ public class UtilisateurController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+
     }
 
     // GET /api/utilisateurs
