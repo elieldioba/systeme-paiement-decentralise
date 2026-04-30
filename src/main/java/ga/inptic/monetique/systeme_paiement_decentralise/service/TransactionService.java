@@ -8,6 +8,9 @@ import ga.inptic.monetique.systeme_paiement_decentralise.repository.TransactionR
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,11 +48,27 @@ public class TransactionService {
 
         // Création de la transaction
         Transaction transaction = new Transaction();
-        transaction.setReference("TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        String reference = "TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        transaction.setReference(reference);
         transaction.setMontant(montant);
         transaction.setExpediteur(expediteur);
         transaction.setDestinataire(destinataire);
         transaction.setStatut(StatutTransaction.PROCESSING);
+
+        // Génération du hash blockchain (SHA-256 simulé)
+        try {
+            String donnees = reference
+                    + expediteur.getAdresseWallet()
+                    + destinataire.getAdresseWallet()
+                    + montant.toPlainString()
+                    + System.currentTimeMillis();
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(donnees.getBytes(StandardCharsets.UTF_8));
+            String hashHex = HexFormat.of().formatHex(hashBytes);
+            transaction.setHashBlockchain("0x" + hashHex);
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur lors de la génération du hash blockchain : " + e.getMessage());
+        }
 
         // Débit et crédit des comptes
         expediteur.setSolde(expediteur.getSolde().subtract(montant));
